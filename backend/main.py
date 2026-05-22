@@ -82,7 +82,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+# GZipMiddleware removed as it breaks WebSockets on Render
 
 # Static files (uploads)
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
