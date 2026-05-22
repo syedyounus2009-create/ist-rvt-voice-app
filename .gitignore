@@ -1,0 +1,22 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+.env
+ist_rvt.db
+
+# Flutter
+.dart_tool/
+build/
+.packages
+.pub-cache/
+.pub/
+*.iml
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

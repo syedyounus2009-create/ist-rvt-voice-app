@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IST-RVT Admin Dashboard</title>
+  <meta name="description" content="IST-RVT Real-Time Voice Translator — Admin Dashboard">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080818;
+      --surface: #10102A;
+      --card: #16163A;
+      --glass: rgba(255,255,255,0.06);
+      --border: #1E1E45;
+      --primary: #6C63FF;
+      --primary-light: #9D97FF;
+      --secondary: #00D4FF;
+      --accent: #FF6B9D;
+      --green: #00E5A0;
+      --warning: #FFB930;
+      --error: #FF4D6D;
+      --text: #FFFFFF;
+      --text2: #B0B0CC;
+      --text3: #6B6B8A;
+      --radius: 20px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(180deg, var(--bg) 0%, #100B28 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+    /* Header */
+    .header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:20px 32px;
+      background: rgba(16,16,42,0.8);
+      backdrop-filter: blur(12px);
+      border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:100;
+    }
+    .header-left { display:flex; align-items:center; gap:14px; }
+    .logo {
+      width:44px; height:44px; border-radius:14px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:14px; letter-spacing:1px;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.4);
+    }
+    .header h1 { font-size:20px; font-weight:700; }
+    .header h1 span { color:var(--text3); font-weight:400; font-size:14px; margin-left:8px; }
+    .status-badge {
+      display:flex; align-items:center; gap:6px;
+      padding:6px 14px; border-radius:20px;
+      background: rgba(0,229,160,0.1); border:1px solid rgba(0,229,160,0.3);
+      font-size:12px; font-weight:600; color:var(--green);
+    }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+    /* Main */
+    .main { padding:28px 32px; max-width:1400px; margin:0 auto; }
+
+    /* Stats Grid */
+    .stats-grid {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:16px; margin-bottom:28px;
+    }
+    .stat-card {
+      background: var(--card); border:1px solid var(--border);
+      border-radius: var(--radius); padding:22px;
+      position:relative; overflow:hidden;
+      transition: transform 0.2s, border-color 0.3s;
+    }
+    .stat-card:hover { transform:translateY(-2px); border-color:var(--primary); }
+    .stat-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      opacity:0; transition:opacity 0.3s;
+    }
+    .stat-card:hover::before { opacity:1; }
+    .stat-label { font-size:12px; color:var(--text3); font-weight:500; text-transform:uppercase; letter-spacing:0.5px; }
+    .stat-value { font-size:32px; font-weight:800; margin:8px 0 4px; background:linear-gradient(135deg,var(--text),var(--text2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-sub { font-size:12px; color:var(--text3); }
+    .stat-icon { position:absolute; top:18px; right:18px; font-size:28px; opacity:0.15; }
+
+    /* Sections */
+    .section { margin-bottom:28px; }
+    .section-title { font-size:16px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .section-title .dot { width:6px; height:6px; border-radius:50%; background:var(--primary); }
+
+    /* Cards */
+    .card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:22px;
+    }
+
+    /* Two-column layout */
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:768px) { .grid-2{grid-template-columns:1fr;} .main{padding:16px;} .header{padding:16px;} }
+
+    /* Table */
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    th { text-align:left; font-size:11px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; padding:10px 14px; border-bottom:1px solid var(--border); }
+    td { padding:12px 14px; font-size:13px; border-bottom:1px solid rgba(30,30,69,0.5); color:var(--text2); }
+    tr:hover td { background:rgba(108,99,255,0.04); }
+
+    /* Chips */
+    .chip {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600;
+    }
+    .chip-online { background:rgba(0,229,160,0.12); color:var(--green); }
+    .chip-voice { background:rgba(108,99,255,0.12); color:var(--primary-light); }
+    .chip-signal { background:rgba(0,212,255,0.12); color:var(--secondary); }
+
+    /* Language tags */
+    .lang-tag {
+      display:inline-block; padding:3px 10px; border-radius:12px;
+      background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.2);
+      font-size:12px; font-weight:600; color:var(--primary-light); margin:2px;
+    }
+
+    /* Refresh bar */
+    .refresh-bar {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:20px; gap:12px;
+    }
+    .refresh-bar .last-update { font-size:12px; color:var(--text3); }
+    .btn-refresh {
+      display:flex; align-items:center; gap:6px;
+      padding:8px 16px; border-radius:12px; border:1px solid var(--border);
+      background:var(--card); color:var(--text); font-size:13px; font-weight:600;
+      cursor:pointer; transition:all 0.2s; font-family:'Outfit',sans-serif;
+    }
+    .btn-refresh:hover { border-color:var(--primary); background:rgba(108,99,255,0.08); }
+    .btn-refresh.spinning svg { animation: spin 1s linear infinite; }
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+    /* Empty state */
+    .empty { text-align:center; padding:40px; color:var(--text3); font-size:14px; }
+
+    /* Footer */
+    .footer { text-align:center; padding:24px; color:var(--text3); font-size:12px; border-top:1px solid var(--border); margin-top:40px; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">RVT</div>
+      <h1>IST-RVT<span>Admin Dashboard</span></h1>
+    </div>
+    <div class="status-badge" id="statusBadge">
+      <div class="status-dot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- Refresh bar -->
+    <div class="refresh-bar">
+      <span class="last-update">Last updated: <span id="lastUpdate">—</span></span>
+      <button class="btn-refresh" id="btnRefresh" onclick="refreshAll()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📡</div>
+        <div class="stat-label">Active Rooms</div>
+        <div class="stat-value" id="activeRooms">—</div>
+        <div class="stat-sub">Live translation sessions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔗</div>
+        <div class="stat-label">Total Connections</div>
+        <div class="stat-value" id="totalConnections">—</div>
+        <div class="stat-sub">All-time WebSocket connects</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">Online Users</div>
+        <div class="stat-value" id="onlineUsers">—</div>
+        <div class="stat-sub">Currently connected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-label">STT Model</div>
+        <div class="stat-value" id="sttModel" style="font-size:22px">—</div>
+        <div class="stat-sub" id="deviceInfo">—</div>
+      </div>
+    </div>
+
+    <!-- Two Column -->
+    <div class="grid-2">
+      <!-- Active Rooms -->
+      <div class="section">
+        <div class="section-title"><div class="dot"></div>Active Rooms</div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Room ID</th><th>Type</th><th>Users</th><th>Age</th></tr></thead>
+              <tbody id="roomsTable"><tr><td colspan="4" class="empty">No active rooms</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Languages -->
+      <div class="section">
+        <div class="section-title"><div class="dot"></div>Installed Translation Pairs</div>
+        <div class="card" id="langPairs">
+          <div class="empty">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Info -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div>System Configuration</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+            <tbody id="configTable"><tr><td colspan="2" class="empty">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TTS Voices -->
+    <div class="section">
+      <div class="section-title"><div class="dot"></div>TTS Voice Mapping</div>
+      <div class="card" id="voicesCard">
+        <div class="empty">Loading...</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">IST-RVT v<span id="appVersion">1.0.0</span> — Real-Time Voice Translation Platform &copy; 2026</footer>
+
+  <script>
+    const BASE = window.location.origin || 'http://localhost:8000';
+    let autoRefreshTimer = null;
+
+    async function fetchStats() {
+      try {
+        const r = await fetch(`${BASE}/api/v1/admin/stats`);
+        if (!r.ok) throw new Error(r.status);
+        const d = await r.json();
+        document.getElementById('activeRooms').textContent = d.active_rooms ?? 0;
+        document.getElementById('totalConnections').textContent = d.total_connections ?? 0;
+        document.getElementById('onlineUsers').textContent = d.online_users ?? 0;
+        document.getElementById('sttModel').textContent = `Whisper ${d.stt_model ?? '—'}`;
+        document.getElementById('deviceInfo').textContent = `${d.device?.toUpperCase() ?? 'CPU'} • TTS: ${d.tts_engine ?? 'edge'}`;
+        document.getElementById('appVersion').textContent = d.version ?? '1.0.0';
+
+        // Config table
+        document.getElementById('configTable').innerHTML = [
+          ['STT Model', d.stt_model],
+          ['Device', d.device?.toUpperCase()],
+          ['TTS Engine', d.tts_engine],
+          ['Version', d.version],
+        ].map(([k,v]) => `<tr><td style="font-weight:600;color:var(--text)">${k}</td><td>${v ?? '—'}</td></tr>`).join('');
+
+        // Rooms table
+        const rooms = d.rooms || [];
+        if (rooms.length === 0) {
+          document.getElementById('roomsTable').innerHTML = '<tr><td colspan="4" class="empty">No active rooms</td></tr>';
+        } else {
+          document.getElementById('roomsTable').innerHTML = rooms.map(r => {
+            const typeClass = r.type === 'audio' ? 'chip-voice' : 'chip-signal';
+            const age = r.age_seconds < 60 ? `${r.age_seconds}s` : `${Math.floor(r.age_seconds/60)}m`;
+            return `<tr>
+              <td style="font-family:monospace;font-size:11px;color:var(--text)">${r.id.substring(0,8)}…</td>
+              <td><span class="chip ${typeClass}">${r.type}</span></td>
+              <td style="font-weight:600;color:var(--text)">${r.participants}</td>
+              <td>${age}</td>
+            </tr>`;
+          }).join('');
+        }
+        setStatus(true);
+      } catch(e) {
+        console.error('Stats fetch failed:', e);
+        setStatus(false);
+      }
+    }
+
+    async function fetchLanguages() {
+      try {
+        const r = await fetch(`${BASE}/api/v1/admin/languages`);
+        if (!r.ok) throw new Error(r.status);
+        const d = await r.json();
+
+        // Installed pairs
+        const pairs = d.installed_pairs || [];
+        if (pairs.length > 0) {
+          document.getElementById('langPairs').innerHTML = pairs.map(p =>
+            `<span class="lang-tag">${p}</span>`
+          ).join(' ');
+        } else {
+          document.getElementById('langPairs').innerHTML = '<div class="empty">No pairs installed yet</div>';
+        }
+
+        // Voices
+        const voices = d.tts_voices || {};
+        const entries = Object.entries(voices);
+        if (entries.length > 0) {
+          document.getElementById('voicesCard').innerHTML = '<div class="table-wrap"><table><thead><tr><th>Language</th><th>Voice</th></tr></thead><tbody>' +
+            entries.map(([lang, voice]) => {
+              const supported = d.supported || {};
+              const name = supported[lang] || lang.toUpperCase();
+              return `<tr><td style="font-weight:600;color:var(--text)">${name}</td><td style="font-family:monospace;font-size:12px">${voice}</td></tr>`;
+            }).join('') + '</tbody></table></div>';
+        }
+      } catch(e) {
+        console.error('Languages fetch failed:', e);
+      }
+    }
+
+    function setStatus(ok) {
+      const badge = document.getElementById('statusBadge');
+      const text = document.getElementById('statusText');
+      const dot = badge.querySelector('.status-dot');
+      if (ok) {
+        badge.style.background = 'rgba(0,229,160,0.1)';
+        badge.style.borderColor = 'rgba(0,229,160,0.3)';
+        text.textContent = 'Connected';
+        text.style.color = 'var(--green)';
+        dot.style.background = 'var(--green)';
+      } else {
+        badge.style.background = 'rgba(255,77,109,0.1)';
+        badge.style.borderColor = 'rgba(255,77,109,0.3)';
+        text.textContent = 'Disconnected';
+        text.style.color = 'var(--error)';
+        dot.style.background = 'var(--error)';
+      }
+    }
+
+    async function refreshAll() {
+      const btn = document.getElementById('btnRefresh');
+      btn.classList.add('spinning');
+      await Promise.all([fetchStats(), fetchLanguages()]);
+      document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+      setTimeout(() => btn.classList.remove('spinning'), 600);
+    }
+
+    // Init
+    refreshAll();
+    autoRefreshTimer = setInterval(refreshAll, 10000);
+  </script>
+</body>
+</html>

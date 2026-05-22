@@ -1,0 +1,35 @@
+# IST-RVT — Local Development Docker Compose
+# Run: docker-compose up --build
+
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - PORT=8000
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DATABASE_URL=sqlite+aiosqlite:///./data/ist_rvt.db
+      - WHISPER_MODEL=small
+      - DEVICE=cpu
+      - COMPUTE_TYPE=int8
+      - TTS_ENGINE=edge
+      - VOICE_CLONE_ENABLED=false
+    volumes:
+      - backend_data:/app/data
+      - backend_uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  backend_data:
+    driver: local
+  backend_uploads:
+    driver: local
