@@ -88,6 +88,14 @@ app.add_middleware(
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
+# Serve Flutter Web App
+web_dir = os.path.join(os.path.dirname(__file__), "web")
+if os.path.exists(web_dir):
+    app.mount("/web", StaticFiles(directory=web_dir, html=True), name="web")
+    logger.info("🌐 Serving Flutter Web app at /web")
+else:
+    logger.warning("⚠️ Flutter Web app directory not found at ./web")
+
 # ── REST Routers ──────────────────────────────────────────────────────────────
 
 app.include_router(auth.router, prefix="/api/v1")
