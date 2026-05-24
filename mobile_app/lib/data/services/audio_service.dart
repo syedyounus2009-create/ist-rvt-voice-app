@@ -5,6 +5,7 @@ import 'package:record/record.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/constants/app_constants.dart';
+import 'audio_player_helper.dart';
 
 enum AudioState { idle, recording, playing, error }
 
@@ -111,7 +112,7 @@ class AudioService {
       _state = AudioState.playing;
       final mimeType = _getMimeType(bytes);
       debugPrint('AudioService playing bytes with detected MIME type: $mimeType (${bytes.length} bytes)');
-      final source = _BytesAudioSource(bytes, mimeType);
+      final source = await AudioPlayerHelper.getAudioSource(bytes, mimeType);
       await _player.setAudioSource(source);
       await _player.play();
       _state = AudioState.idle;
