@@ -56,36 +56,18 @@ class TranslationService:
         await asyncio.get_event_loop().run_in_executor(None, self._setup_argos)
 
     def _setup_argos(self):
-        """Install argostranslate packages for common language pairs."""
+        """Check already installed argostranslate packages without downloading new ones."""
         try:
             import argostranslate.package
             import argostranslate.translate
 
-            logger.info("🔄 Checking argostranslate packages...")
-            argostranslate.package.update_package_index()
-            available = argostranslate.package.get_available_packages()
-
-            priority_pairs = [
-                ("en", "ar"), ("ar", "en"),
-                ("en", "zh"), ("zh", "en"),
-                ("en", "ur"), ("ur", "en"),
-                ("en", "fr"), ("en", "es"),
-                ("en", "de"), ("en", "hi"),
-                ("en", "ru"), ("en", "tr"),
-            ]
-
-            for src, tgt in priority_pairs:
-                pkg = next(
-                    (p for p in available if p.from_code == src and p.to_code == tgt),
-                    None,
-                )
-                if pkg and not pkg.is_installed():
-                    logger.info(f"📥 Downloading translation model: {src}→{tgt}")
-                    argostranslate.package.install_from_path(pkg.download())
-                self._installed_pairs.add((src, tgt))
+            logger.info("🔄 Checking installed argostranslate packages...")
+            installed = argostranslate.package.get_installed_packages()
+            for pkg in installed:
+                self._installed_pairs.add((pkg.from_code, pkg.to_code))
 
             self._argos_ready = True
-            logger.info("✅ Translation service ready (offline capable)")
+            logger.info(f"✅ Translation service ready (offline capable with {len(self._installed_pairs)} installed models)")
         except Exception as e:
             logger.warning(f"⚠️ Argostranslate setup failed: {e}. Will use Google fallback.")
             self._argos_ready = False

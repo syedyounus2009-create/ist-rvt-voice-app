@@ -12,13 +12,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _userCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscure = true;
 
   @override
   void dispose() {
-    _userCtrl.dispose();
+    _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
   }
@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthProvider>();
     final ok = await auth.login(
-      username: _userCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
       password: _passCtrl.text,
     );
     if (ok && mounted) context.go('/home');
@@ -82,18 +82,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 48),
-                    // Username
-                    _buildLabel('Username'),
+                    // Email
+                    _buildLabel('Email'),
                     const SizedBox(height: 8),
                     TextFormField(
-                      controller: _userCtrl,
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
                       style: const TextStyle(color: AppColors.textPrimary),
                       decoration: const InputDecoration(
-                        hintText: 'Enter your username',
-                        prefixIcon: Icon(Icons.person_outline_rounded),
+                        hintText: 'Enter your email',
+                        prefixIcon: Icon(Icons.email_outlined),
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Username required' : null,
+                      validator: (v) => (v == null || !v.contains('@'))
+                          ? 'Valid email required' : null,
                     ),
                     const SizedBox(height: 20),
                     // Password

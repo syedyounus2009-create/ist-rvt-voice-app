@@ -109,7 +109,9 @@ class AudioService {
   Future<void> playBytes(Uint8List bytes) async {
     try {
       _state = AudioState.playing;
-      final source = _BytesAudioSource(bytes);
+      final mimeType = _getMimeType(bytes);
+      debugPrint('AudioService playing bytes with detected MIME type: $mimeType (${bytes.length} bytes)');
+      final source = _BytesAudioSource(bytes, mimeType);
       await _player.setAudioSource(source);
       await _player.play();
       _state = AudioState.idle;
@@ -117,6 +119,24 @@ class AudioService {
       debugPrint('AudioService playback error: $e');
       _state = AudioState.idle;
     }
+  }
+
+  String _getMimeType(Uint8List bytes) {
+    if (bytes.length >= 4) {
+      // RIFF (WAV signature)
+      if (bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46) {
+        return 'audio/wav';
+      }
+      // ID3 (MP3 signature)
+      if (bytes[0] == 0x49 && bytes[1] == 0x44 && bytes[2] == 0x33) {
+        return 'audio/mpeg';
+      }
+      // MP3 frame sync word
+      if (bytes[0] == 0xFF && (bytes[1] & 0xE0) == 0xE0) {
+        return 'audio/mpeg';
+      }
+    }
+    return 'audio/wav'; // Fallback
   }
 
   /// Play from URL
@@ -159,7 +179,8 @@ class AudioService {
 /// Custom AudioSource for playing raw bytes
 class _BytesAudioSource extends StreamAudioSource {
   final Uint8List _bytes;
-  _BytesAudioSource(this._bytes);
+  final String _mimeType;
+  _BytesAudioSource(this._bytes, this._mimeType);
 
   @override
   Future<StreamAudioResponse> request([int? start, int? end]) async {
@@ -170,7 +191,7 @@ class _BytesAudioSource extends StreamAudioSource {
       contentLength: end - start,
       offset: start,
       stream: Stream.value(_bytes.sublist(start, end)),
-      contentType: 'audio/wav',
+      contentType: _mimeType,
     );
   }
 }

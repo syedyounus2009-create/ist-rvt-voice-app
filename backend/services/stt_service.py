@@ -48,6 +48,7 @@ class STTService:
             model="silero_vad",
             force_reload=False,
             verbose=False,
+            trust_repo=True,
         )
         self.vad_model.eval()
 

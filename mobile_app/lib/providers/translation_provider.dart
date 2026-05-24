@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 import '../data/models/message_model.dart';
 import '../data/services/websocket_service.dart';
 import '../data/services/audio_service.dart';
@@ -24,6 +25,7 @@ class TranslationProvider extends ChangeNotifier {
   bool _isConnected = false;
   bool _offlineMode = false;
   String? _error;
+  String? _currentUserId;
 
   // Translation history
   final List<TranslationResult> _history = [];
@@ -63,27 +65,64 @@ class TranslationProvider extends ChangeNotifier {
 
   // ── WebSocket Mode (Online Real-time) ─────────────────────────────────────
 
+  /// Connect with a specific user ID (authenticated user)
   Future<void> connectRealtime(String userId) async {
+    _currentUserId = userId;
+    await _doConnect(userId);
+  }
+
+  /// Connect anonymously (generates a random user ID)
+  Future<void> connectAnonymous() async {
+    _currentUserId ??= const Uuid().v4();
+    await _doConnect(_currentUserId!);
+  }
+
+  Future<void> _doConnect(String userId) async {
+    if (_isConnected) return; // Already connected
+
     final roomId = 'standalone_$userId';
     final url = AppConstants.audioWs(roomId, userId, _sourceLang, _targetLang);
+
+    debugPrint('[IST-RVT] Connecting WebSocket to: $url');
 
     _wsService.onTranslation = _onTranslationResult;
     _wsService.onAudio = _onTranslatedAudio;
     _wsService.onStateChange = (s) {
+      debugPrint('[IST-RVT] WebSocket state: $s');
       _isConnected = s == WsConnectionState.connected;
+      if (s == WsConnectionState.error) {
+        _error = 'WebSocket connection failed';
+      }
       notifyListeners();
     };
 
-    await _wsService.connect(url);
+    try {
+      await _wsService.connect(url);
+      debugPrint('[IST-RVT] WebSocket connect() returned, connected=$_isConnected');
+    } catch (e) {
+      debugPrint('[IST-RVT] WebSocket connect error: $e');
+      _error = 'Connection error: $e';
+    }
     notifyListeners();
   }
 
   Future<void> startListening() async {
+    debugPrint('[IST-RVT] startListening called. connected=$_isConnected offlineMode=$_offlineMode');
+
     final granted = await _audioService.requestPermissions();
     if (!granted) {
       _error = 'Microphone permission denied';
+      debugPrint('[IST-RVT] Mic permission denied');
       notifyListeners();
       return;
+    }
+
+    // Auto-connect if not connected yet
+    if (!_isConnected && !_offlineMode) {
+      debugPrint('[IST-RVT] Auto-connecting before recording...');
+      await connectAnonymous();
+      // Give it a moment to establish
+      await Future.delayed(const Duration(milliseconds: 800));
     }
 
     _state = TranslationState.listening;
@@ -93,16 +132,26 @@ class TranslationProvider extends ChangeNotifier {
     notifyListeners();
 
     if (_isConnected && !_offlineMode) {
+      debugPrint('[IST-RVT] Starting audio stream to WebSocket...');
       // Stream to backend WebSocket
       final stream = _audioService.startStreaming();
       _audioStreamSub = stream?.listen((chunk) {
+        debugPrint('[IST-RVT] Sending audio chunk: ${chunk.length} bytes');
         _wsService.sendAudio(chunk);
+      }, onError: (e) {
+        debugPrint('[IST-RVT] Audio stream error: $e');
       });
+    } else {
+      debugPrint('[IST-RVT] WARNING: Not connected. connected=$_isConnected offline=$_offlineMode');
+      // Still start recording for waveform display even if not connected
+      _audioService.startStreaming();
     }
   }
 
   Future<void> stopListening() async {
+    debugPrint('[IST-RVT] stopListening called');
     await _audioStreamSub?.cancel();
+    _audioStreamSub = null;
     await _audioService.stopStreaming();
 
     if (_state == TranslationState.listening) {
@@ -112,6 +161,7 @@ class TranslationProvider extends ChangeNotifier {
   }
 
   void _onTranslationResult(Map<String, dynamic> json) {
+    debugPrint('[IST-RVT] Translation received: ${json['original']?.toString().substring(0, (json['original']?.toString().length ?? 0).clamp(0, 50))}');
     final result = TranslationResult.fromJson(json);
     _originalText = result.original;
     _translatedText = result.translated;
@@ -125,6 +175,7 @@ class TranslationProvider extends ChangeNotifier {
   }
 
   void _onTranslatedAudio(Uint8List audioBytes) {
+    debugPrint('[IST-RVT] Audio received: ${audioBytes.length} bytes');
     _audioService.playBytes(audioBytes);
     Future.delayed(const Duration(milliseconds: 500), () {
       if (_state == TranslationState.playing) {
@@ -136,18 +187,22 @@ class TranslationProvider extends ChangeNotifier {
 
   // ── REST API Translation (offline/text) ──────────────────────────────────
 
-  Future<TranslationResult?> translateText(String text, String authToken) async {
+  Future<TranslationResult?> translateText(String text, String? authToken) async {
     if (text.trim().isEmpty) return null;
     _state = TranslationState.processing;
     notifyListeners();
 
     try {
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      if (authToken != null && authToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $authToken';
+      }
+
       final resp = await http.post(
         Uri.parse(AppConstants.translateText),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $authToken',
-        },
+        headers: headers,
         body: jsonEncode({
           'text': text,
           'source_lang': _sourceLang,
@@ -155,6 +210,8 @@ class TranslationProvider extends ChangeNotifier {
           'synthesize': true,
         }),
       );
+
+      debugPrint('[IST-RVT] Text translate response: ${resp.statusCode}');
 
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
@@ -175,6 +232,7 @@ class TranslationProvider extends ChangeNotifier {
         return result;
       }
     } catch (e) {
+      debugPrint('[IST-RVT] Text translation error: $e');
       _error = 'Translation failed: $e';
     }
 

@@ -50,9 +50,9 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> register({
-    required String username,
     required String email,
     required String password,
+    required String phone,
     String? displayName,
     String preferredLanguage = 'en',
     String targetLanguage = 'ar',
@@ -66,10 +66,11 @@ class AuthProvider extends ChangeNotifier {
         Uri.parse(AppConstants.registerUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'username': username,
+          'username': email,
           'email': email,
+          'phone': phone,
           'password': password,
-          'display_name': displayName ?? username,
+          'display_name': displayName ?? email.split('@')[0],
           'preferred_language': preferredLanguage,
           'target_language': targetLanguage,
         }),
@@ -94,7 +95,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> login({required String username, required String password}) async {
+  Future<bool> login({required String email, required String password}) async {
     _status = AuthStatus.loading;
     _error = null;
     notifyListeners();
@@ -103,7 +104,7 @@ class AuthProvider extends ChangeNotifier {
       final resp = await http.post(
         Uri.parse(AppConstants.loginUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}),
+        body: jsonEncode({'username': email, 'password': password}),
       );
 
       if (resp.statusCode == 200) {

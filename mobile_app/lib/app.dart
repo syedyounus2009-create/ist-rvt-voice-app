@@ -35,14 +35,12 @@ class _ISTRVTAppState extends State<ISTRVTApp> {
       redirect: (context, state) {
         final auth = context.read<AuthProvider>();
         final isLoggedIn = auth.isAuthenticated;
-        final onAuth = state.matchedLocation == '/login' ||
-            state.matchedLocation == '/register' ||
-            state.matchedLocation == '/splash' ||
-            state.matchedLocation == '/onboarding';
+        final loc = state.matchedLocation;
+        final publicRoutes = ['/login', '/register', '/splash', '/onboarding', '/home', '/translator'];
+        final isPublic = publicRoutes.contains(loc);
 
-        if (!isLoggedIn && !onAuth) return '/login';
-        if (isLoggedIn && (state.matchedLocation == '/login' ||
-            state.matchedLocation == '/register')) return '/home';
+        if (!isLoggedIn && !isPublic) return '/home';
+        if (isLoggedIn && (loc == '/login' || loc == '/register')) return '/home';
         return null;
       },
       routes: [

@@ -254,7 +254,9 @@
   <footer class="footer">IST-RVT v<span id="appVersion">1.0.0</span> — Real-Time Voice Translation Platform &copy; 2026</footer>
 
   <script>
-    const BASE = window.location.origin || 'http://localhost:8000';
+    const BASE = (window.location.origin && window.location.origin.startsWith('http'))
+      ? window.location.origin
+      : 'http://localhost:8000';
     let autoRefreshTimer = null;
 
     async function fetchStats() {

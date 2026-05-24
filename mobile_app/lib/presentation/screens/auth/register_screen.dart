@@ -14,7 +14,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey  = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
-  final _userCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _emailCtrl= TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscure   = true;
@@ -23,7 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose(); _userCtrl.dispose();
+    _nameCtrl.dispose(); _phoneCtrl.dispose();
     _emailCtrl.dispose(); _passCtrl.dispose();
     super.dispose();
   }
@@ -32,9 +32,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthProvider>();
     final ok = await auth.register(
-      username: _userCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       password: _passCtrl.text,
+      phone: _phoneCtrl.text.trim(),
       displayName: _nameCtrl.text.trim(),
       preferredLanguage: _srcLang,
       targetLanguage: _tgtLang,
@@ -79,15 +79,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ? 'Name required' : null),
                   const SizedBox(height: 16),
 
-                  _label('Username'),
+                  _label('Mobile Number'),
                   const SizedBox(height: 8),
-                  _field(_userCtrl, 'Unique username',
-                      Icons.alternate_email_rounded,
+                  _field(_phoneCtrl, '+1 234 567 8900',
+                      Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
                       validator: (v) {
-                        if (v == null || v.trim().length < 3)
-                          return 'Min 3 characters';
-                        if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v))
-                          return 'Letters, numbers, _ only';
+                        if (v == null || v.trim().length < 5)
+                          return 'Valid phone number required';
                         return null;
                       }),
                   const SizedBox(height: 16),

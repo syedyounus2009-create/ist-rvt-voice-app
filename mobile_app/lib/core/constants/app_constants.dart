@@ -9,12 +9,12 @@ class AppConstants {
   // Local development — web uses laptop WiFi IP, accessible from iPhone on same WiFi
   // ── Backend URLs ─────────────────────────────────────────────────────────
   // Local development — forced to explicit loopback IP for reliable routing
-  static String get _localBase =>'http://192.168.29.150:8000';
+  static String get _localBase => kIsWeb ? 'http://${Uri.base.host}:8000' : 'http://10.0.2.2:8000';
   // Railway / Cloud deployment — replace with your actual URL
-  static const String _cloudBase = 'https://ist-rvt-backend.up.railway.app';
+  static const String _cloudBase = 'https://ist-rvt-backend.onrender.com';
 
   // Switch between local and cloud
-  static const bool useCloud = false;
+  static const bool useCloud = true;
   static String get baseUrl => useCloud ? _cloudBase : _localBase;
   static String get wsBase  => useCloud
       ? _cloudBase.replaceFirst('https', 'wss').replaceFirst('http', 'ws')

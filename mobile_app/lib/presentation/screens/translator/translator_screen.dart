@@ -41,6 +41,9 @@ class _TranslatorScreenState extends State<TranslatorScreen>
       final trans = context.read<TranslationProvider>();
       if (auth.isAuthenticated) {
         trans.connectRealtime(auth.user!.id);
+      } else {
+        // Connect anonymously so voice translation works without login
+        trans.connectAnonymous();
       }
     });
   }
@@ -65,19 +68,12 @@ class _TranslatorScreenState extends State<TranslatorScreen>
 
   Future<void> _toggleRecording() async {
     final trans = context.read<TranslationProvider>();
-    final auth = context.read<AuthProvider>();
     
     if (trans.isListening) {
       await trans.stopListening();
       _amplitudeTimer?.cancel();
       setState(() => _amplitude = 0);
     } else {
-      // Auto-connect if missed during init (e.g. on page refresh)
-      if (!trans.isConnected && !trans.offlineMode && auth.isAuthenticated) {
-        await trans.connectRealtime(auth.user!.id);
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-      
       await trans.startListening();
       _startAmplitudePolling();
     }
