@@ -84,6 +84,14 @@ app.add_middleware(
 )
 # GZipMiddleware removed as it breaks WebSockets on Render
 
+# Middleware to prevent browser caching for Web App to bypass old cached PWAs
+@app.middleware("http")
+async def add_cache_control_header(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/web"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
+
 # Static files (uploads)
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
@@ -95,6 +103,13 @@ if os.path.exists(web_dir):
     logger.info("🌐 Serving Flutter Web app at /web")
 else:
     logger.warning("⚠️ Flutter Web app directory not found at ./web")
+
+# Redirect old repository paths (from cached service worker/manifest fetches)
+@app.get("/ist-rvt-voice-app/{path:path}")
+async def redirect_old_path(path: str):
+    from fastapi.responses import RedirectResponse
+    # Redirect manifest.json, flutter_bootstrap.js, etc. to /web/{path}
+    return RedirectResponse(url=f"/web/{path}")
 
 # ── REST Routers ──────────────────────────────────────────────────────────────
 
