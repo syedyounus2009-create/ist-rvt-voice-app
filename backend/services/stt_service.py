@@ -40,7 +40,8 @@ class STTService:
             settings.WHISPER_MODEL,
             device=settings.DEVICE,
             compute_type=settings.COMPUTE_TYPE,
-            num_workers=2,
+            cpu_threads=1,
+            num_workers=1,
         )
         # Silero VAD
         self.vad_model, self.vad_utils = torch.hub.load(
