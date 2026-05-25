@@ -13,8 +13,7 @@ WORKDIR /app
 
 # Install Python deps (cached layer)
 COPY requirements.txt .
-RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu \
-    -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app code
 COPY . .

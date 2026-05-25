@@ -34,7 +34,6 @@ class STTService:
 
     def _load_models(self):
         """Load models in thread pool to not block async loop."""
-        import torch
         from faster_whisper import WhisperModel
         self.model = WhisperModel(
             settings.WHISPER_MODEL,
@@ -43,27 +42,19 @@ class STTService:
             cpu_threads=1,
             num_workers=1,
         )
-        # Silero VAD
-        self.vad_model, self.vad_utils = torch.hub.load(
-            repo_or_dir="snakers4/silero-vad",
-            model="silero_vad",
-            force_reload=False,
-            verbose=False,
-            trust_repo=True,
-        )
-        self.vad_model.eval()
 
     def is_speech(self, audio_chunk) -> bool:
-        """Detect speech in a 100ms chunk using Silero VAD."""
-        if self.vad_model is None:
-            return True  # Fallback: assume speech if VAD not loaded
+        """Detect speech in a 100ms chunk using RMS energy threshold."""
+        import numpy as np
         try:
-            import torch
-            tensor = torch.from_numpy(audio_chunk).float()
-            if tensor.abs().max() > 1.0:
-                tensor = tensor / 32768.0  # normalize int16
-            confidence = self.vad_model(tensor, settings.SAMPLE_RATE).item()
-            return confidence > settings.VAD_THRESHOLD
+            if audio_chunk is None or len(audio_chunk) == 0:
+                return True
+            max_val = np.max(np.abs(audio_chunk))
+            if max_val > 1.0:
+                audio_chunk = audio_chunk / 32768.0  # normalize int16
+            rms = np.sqrt(np.mean(np.square(audio_chunk)))
+            # Standard vocal presence RMS threshold (0.015)
+            return rms > 0.015
         except Exception:
             return True
 

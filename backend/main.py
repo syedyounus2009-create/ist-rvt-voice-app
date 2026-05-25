@@ -165,7 +165,7 @@ async def health():
     return {
         "status": "healthy",
         "stt_ready": stt_service._initialized,
-        "translation_ready": translation_service._argos_ready,
+        "translation_ready": True,  # Google Translate is always ready
         "active_rooms": room_manager.stats()["active_rooms"],
         "timestamp": int(time.time()),
     }

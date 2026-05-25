@@ -24,8 +24,6 @@ alembic>=1.13.1
 faster-whisper>=1.0.1
 
 # === AI — Translation ===
-# argostranslate: fully offline translation, no API key needed
-argostranslate>=1.9.6
 # deep-translator: API-based fallback (Google Translate free tier)
 deep-translator>=1.11.4
 
@@ -45,11 +43,6 @@ scipy>=1.13.0
 soundfile>=0.12.1
 pydub>=0.25.1
 librosa>=0.10.2
-
-# === PyTorch (CPU version — for VAD) ===
-torch>=2.2.2
-torchaudio>=2.2.2
---extra-index-url https://download.pytorch.org/whl/cpu
 
 # === Utilities ===
 python-dotenv>=1.0.1
