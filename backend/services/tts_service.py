@@ -68,25 +68,14 @@ class TTSService:
 
             voice = voice_name or EDGE_TTS_VOICES.get(language, "en-US-AriaNeural")
 
-            def _run():
-                import asyncio as _asyncio
-                async def _inner():
-                    communicate = edge_tts.Communicate(text, voice)
-                    audio_data = b""
-                    async for chunk in communicate.stream():
-                        if chunk["type"] == "audio":
-                            audio_data += chunk["data"]
-                    return audio_data
+            communicate = edge_tts.Communicate(text, voice)
+            audio_data = b""
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio_data += chunk["data"]
 
-                loop = _asyncio.new_event_loop()
-                try:
-                    return loop.run_until_complete(_inner())
-                finally:
-                    loop.close()
-
-            audio = await asyncio.get_event_loop().run_in_executor(None, _run)
             # Convert mp3 → wav
-            audio = self._mp3_to_wav(audio)
+            audio = self._mp3_to_wav(audio_data)
             return audio, "edge_tts"
 
         except Exception as e:
