@@ -164,7 +164,7 @@ class TranslationProvider extends ChangeNotifier {
   }
 
   void _onTranslationResult(Map<String, dynamic> json) {
-    debugPrint('[IST-RVT] Translation received: ${json['original']?.toString().substring(0, (json['original']?.toString().length ?? 0).clamp(0, 50))}');
+    debugPrint('[IST-RVT] Translation received: ${json['translated']?.toString().substring(0, (json['translated']?.toString().length ?? 0).clamp(0, 50))}');
     final result = TranslationResult.fromJson(json);
     _originalText = result.original;
     _translatedText = result.translated;

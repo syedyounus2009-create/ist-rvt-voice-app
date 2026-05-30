@@ -9,4 +9,8 @@ abstract class AudioPlayerHelper {
   static Future<AudioSource> getAudioSource(Uint8List bytes, String mimeType) {
     return getPlatformAudioSource(bytes, mimeType);
   }
+
+  static Future<bool> playBytesDirectly(Uint8List bytes, String mimeType) {
+    return platformPlayBytesDirectly(bytes, mimeType);
+  }
 }

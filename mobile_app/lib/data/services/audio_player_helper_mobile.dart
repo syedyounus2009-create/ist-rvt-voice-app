@@ -9,3 +9,7 @@ Future<AudioSource> getPlatformAudioSource(Uint8List bytes, String mimeType) asy
   await file.writeAsBytes(bytes);
   return AudioSource.file(file.path);
 }
+
+Future<bool> platformPlayBytesDirectly(Uint8List bytes, String mimeType) async {
+  return false;
+}

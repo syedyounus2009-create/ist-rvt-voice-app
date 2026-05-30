@@ -137,9 +137,17 @@ class AudioService {
       _state = AudioState.playing;
       final mimeType = _getMimeType(bytes);
       debugPrint('AudioService playing bytes with detected MIME type: $mimeType (${bytes.length} bytes)');
-      final source = await AudioPlayerHelper.getAudioSource(bytes, mimeType);
-      await _player.setAudioSource(source);
-      await _player.play();
+      
+      // Try playing directly first (handles Web perfectly and bypasses just_audio Web bugs)
+      final playedDirectly = await AudioPlayerHelper.playBytesDirectly(bytes, mimeType);
+      
+      if (!playedDirectly) {
+        // Fallback for native mobile / other platforms using just_audio
+        final source = await AudioPlayerHelper.getAudioSource(bytes, mimeType);
+        await _player.setAudioSource(source);
+        await _player.play();
+      }
+      
       _state = AudioState.idle;
     } catch (e) {
       debugPrint('AudioService playback error: $e');
