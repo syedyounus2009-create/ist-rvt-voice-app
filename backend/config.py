@@ -32,7 +32,12 @@ class Settings(BaseSettings):
     REDIS_URL: Optional[str] = os.getenv("REDIS_URL", None)
 
     # ─── AI Models ───────────────────────────────────────────
-    # STT: Options: tiny, base, small, medium, large-v2, large-v3
+    # STT Provider: "local" (faster-whisper), "groq" (fast cloud API), "openai" (OpenAI API)
+    STT_PROVIDER: str = os.getenv("STT_PROVIDER", "local")
+    GROQ_API_KEY: Optional[str] = os.getenv("GROQ_API_KEY", None)
+    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", None)
+
+    # STT (Local configuration): Options: tiny, base, small, medium, large-v2, large-v3
     WHISPER_MODEL: str = os.getenv("WHISPER_MODEL", "tiny")
     # Device: "cuda" if GPU available, otherwise "cpu"
     DEVICE: str = os.getenv("DEVICE", "cpu")

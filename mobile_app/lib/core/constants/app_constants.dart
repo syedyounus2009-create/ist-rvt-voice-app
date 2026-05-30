@@ -13,12 +13,19 @@ class AppConstants {
   // Railway / Cloud deployment — replace with your actual URL
   static const String _cloudBase = 'https://ist-rvt-backend.onrender.com';
 
-  // Switch between local and cloud
   static const bool useCloud = true;
-  static String get baseUrl => useCloud ? _cloudBase : _localBase;
-  static String get wsBase  => useCloud
-      ? _cloudBase.replaceFirst('https', 'wss').replaceFirst('http', 'ws')
-      : _localBase.replaceFirst('https', 'wss').replaceFirst('http', 'ws');
+  
+  static String get baseUrl {
+    if (kIsWeb) {
+      // Dynamically resolve to the exact browser domain hosting the web app
+      final uri = Uri.base;
+      final portStr = uri.hasPort ? ':${uri.port}' : '';
+      return '${uri.scheme}://${uri.host}$portStr';
+    }
+    return useCloud ? _cloudBase : _localBase;
+  }
+
+  static String get wsBase => baseUrl.replaceFirst('https', 'wss').replaceFirst('http', 'ws');
 
   // ── API Endpoints ────────────────────────────────────────────────────────
   static String get apiBase       => '$baseUrl/api/v1';
