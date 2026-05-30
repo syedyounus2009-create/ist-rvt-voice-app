@@ -109,6 +109,9 @@ class TranslationProvider extends ChangeNotifier {
   Future<void> startListening() async {
     debugPrint('[IST-RVT] startListening called. connected=$_isConnected offlineMode=$_offlineMode');
 
+    // Unlock the browser Web Audio Context synchronously inside this user tap gesture
+    _audioService.warmUpWebAudio();
+
     final granted = await _audioService.requestPermissions();
     if (!granted) {
       _error = 'Microphone permission denied';
